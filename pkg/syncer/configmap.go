@@ -156,6 +156,15 @@ func (s *ConfigSyncer) upsertConfigMap(kc kubernetes.Interface, src *core.Config
 
 		obj.Data = src.Data
 		obj.BinaryData = src.BinaryData
+
+		labelBlacklist := []string{"app.kubernetes.io/instance"}
+		for _, entry := range labelBlacklist {
+			if _, ok := src.Labels[entry]; ok {
+				klog.Infof("Remove label %s while copy configmap %s into namespaces %v", entry, src.Name, namespace)
+				delete(src.Labels, entry)
+			}
+		}
+
 		obj.Labels = labels.Merge(src.Labels, s.syncerLabels(src.Name, src.Namespace, s.clusterName))
 
 		ref := core.ObjectReference{
